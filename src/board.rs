@@ -1,10 +1,13 @@
-use crate::move_info::{Coordinate, MoveInfo};
+use crate::{
+    legal_moves::LegalMovesComputer,
+    move_info::{Coordinate, MoveInfo},
+};
 use colored::*;
 use std::fmt::Display;
 use thiserror::Error;
 
 #[derive(Copy, Clone)]
-enum SlotContent {
+pub enum SlotContent {
     Empty,
     Piece(Piece),
 }
@@ -74,90 +77,11 @@ impl Board {
         board
     }
 
-    pub fn list_legal_moves_for(
-        &self,
-        coordinate: Coordinate,
-    ) -> Result<Vec<MoveInfo>, CheckerError> {
-        coordinate.check()?;
-
-        let mut legal_moves: Vec<MoveInfo> = vec![];
-
-        let cell = self.at(&coordinate);
-        if let SlotContent::Piece(piece) = cell {
-            let y_increments: Vec<isize> = match piece.piece_type {
-                PieceType::King => vec![-1, 1],
-                PieceType::Man => match piece.color {
-                    PieceColor::White => vec![1],
-                    PieceColor::Black => vec![-1],
-                },
-            };
-
-            for y_increment in y_increments {
-                for i in 0..=1 {
-                    let mut to = coordinate;
-                    to.y = (to.y as isize + y_increment) as usize;
-
-                    if i == 0 {
-                        to.x += 1;
-                    } else {
-                        to.x -= 1;
-                    }
-
-                    if to.check().is_err() {
-                        continue;
-                    }
-
-                    let cell = self.at(&to);
-                    if let SlotContent::Piece(other_piece) = cell {
-                        if piece.color == other_piece.color {
-                            continue;
-                        }
-
-                        for i in 0..=1 {
-                            let mut behind = to;
-                            behind.y = (to.y as isize + y_increment) as usize;
-
-                            if i == 0 {
-                                behind.x += 1;
-                            } else {
-                                behind.x -= 1;
-                            }
-
-                            if behind.check().is_err() {
-                                continue;
-                            }
-
-                            let cell = self.at(&behind);
-                            if matches!(cell, SlotContent::Empty) {
-                                // TODO: add multiple captures in a row
-                                legal_moves.push(MoveInfo {
-                                    from: coordinate,
-                                    to,
-                                    capturing: vec![to],
-                                });
-                            }
-                        }
-                    } else {
-                        legal_moves.push(MoveInfo {
-                            from: coordinate,
-                            to,
-                            capturing: vec![],
-                        });
-                    }
-                }
-            }
-        } else {
-            return Err(CheckerError::EmptyCell(coordinate));
-        }
-
-        Ok(legal_moves)
-    }
-
     fn at_mut(&mut self, coordinate: &Coordinate) -> &mut SlotContent {
         &mut self.cells[coordinate.y][coordinate.x]
     }
 
-    fn at(&self, coordinate: &Coordinate) -> &SlotContent {
+    pub fn at(&self, coordinate: &Coordinate) -> &SlotContent {
         &self.cells[coordinate.y][coordinate.x]
     }
 
@@ -165,9 +89,9 @@ impl Board {
         move_info.from.check()?;
         move_info.to.check()?;
 
-        let legal_moves = self.list_legal_moves_for(move_info.from)?;
+        let legal_moves = LegalMovesComputer::new(self).compute(move_info.from)?;
 
-        println!("{:?}", legal_moves);
+        println!("{legal_moves:?}");
 
         match legal_moves.iter().find(|x| x.to == move_info.to) {
             None => Err(CheckerError::IllegalMove(move_info, "?".into())),
@@ -186,10 +110,16 @@ impl Board {
     }
 }
 
+impl Default for Board {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Display for Board {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         for (y, row) in self.cells.iter().enumerate().rev() {
-            write!(f, "\t{}", y)?;
+            write!(f, "\t{y}")?;
             for (x, cell) in row.iter().enumerate() {
                 let aaa = match cell {
                     SlotContent::Piece(piece) => {
@@ -216,7 +146,7 @@ impl Display for Board {
 
         write!(f, "\t ")?;
         for i in 0..8 {
-            write!(f, "{}", i)?;
+            write!(f, "{i}")?;
         }
         writeln!(f)?;
 

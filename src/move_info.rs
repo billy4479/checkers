@@ -39,7 +39,7 @@ impl Display for MoveInfo {
         if !self.capturing.is_empty() {
             write!(f, " (capturing ")?;
             for (i, captures) in self.capturing.iter().enumerate() {
-                write!(f, "{}", captures)?;
+                write!(f, "{captures}")?;
                 if i != self.capturing.len() - 1 {
                     write!(f, ", ")?;
                 }

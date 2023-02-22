@@ -1,11 +1,11 @@
-use crate::move_info::{Coordinate, MoveInfo};
-
-mod board;
-mod move_info;
+use checkers::{
+    board::Board,
+    move_info::{Coordinate, MoveInfo},
+};
 
 fn main() {
-    let mut board = board::Board::new();
-    println!("{}", board);
+    let mut board = Board::new();
+    println!("{board}");
 
     let result = board.move_piece(MoveInfo {
         from: Coordinate { x: 2, y: 2 },
@@ -14,7 +14,7 @@ fn main() {
     });
 
     match result {
-        Ok(()) => println!("{}", board),
-        Err(e) => println!("{}", e),
+        Ok(()) => println!("{board}"),
+        Err(e) => println!("{e}"),
     };
 }
