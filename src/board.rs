@@ -89,7 +89,7 @@ impl Board {
         move_info.from.check()?;
         move_info.to.check()?;
 
-        let legal_moves = LegalMovesComputer::new(self).compute(move_info.from)?;
+        let legal_moves = LegalMovesComputer::new(self).compute(&move_info.from)?;
 
         println!("{legal_moves:?}");
 

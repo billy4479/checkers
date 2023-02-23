@@ -2,7 +2,7 @@ use std::fmt::Display;
 
 use crate::board::CheckerError;
 
-#[derive(Debug, Copy, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Coordinate {
     pub x: usize,
     pub y: usize,
@@ -17,7 +17,7 @@ impl Display for Coordinate {
 impl Coordinate {
     pub fn check(&self) -> Result<(), CheckerError> {
         if self.x >= 8 || self.y >= 8 {
-            Err(CheckerError::InvalidCoordinate(*self))
+            Err(CheckerError::InvalidCoordinate(self.clone()))
         } else {
             Ok(())
         }
